@@ -8,23 +8,45 @@ sprites.onOverlap(SpriteKind.Player, SpriteKind.Grocery, function (sprite, other
         pause(200)
     }
 })
-    let subtotal = 0
-    let speed = 100
 function createTextSprite () {
     textSprite = textsprite.create("$0")
     textSprite.left = 0
     textSprite.top = 0
     textSprite.setFlag(SpriteFlag.RelativeToCamera, true)
 }
+scene.onOverlapTile(SpriteKind.Player, assets.tile`tile10`, function (sprite, location) {
+ let display =	"subtotal: $"   + subtotal
+
+
+for(let item of sprites.allOfKind(SpriteKind.CartItem)) {
+    let cost =  sprites.readDataNumber(item, "cost")
+    let name = sprites.readDataString(item, "name")
+    display = display + "\n" + name + ": $" + cost
+
+}
+
+ game.showLongText(display, DialogLayout.Center)
+ game.over(true )
+})
 function addToCart (groceryItem: Sprite) {
     item = sprites.create(groceryItem.image, SpriteKind.CartItem)
     item.follow(player2)
     item.x = player2.x
     item.y = player2.y
-
-    let cost = sprites.readDataNumber(groceryItem,  "cost")
+    cost = sprites.readDataNumber(groceryItem, "cost")
     subtotal = subtotal + cost
     textSprite.setText("$" + subtotal)
+    weight = sprites.readDataNumber(groceryItem, "weight")
+    speed = speed - weight
+    if (speed < 5) {
+        speed = 5
+    }
+    controller.moveSprite(player2, speed, speed)
+
+    
+    let name = sprites.readDataString(groceryItem, "name")
+    sprites.setDataString(item, "name", name)
+    sprites.setDataNumber(item, "cost" , cost)
 }
 function createProduct (productImg: Image, name: string, weight: number, cost: number) {
     p = sprites.create(productImg, SpriteKind.Grocery)
@@ -36,17 +58,20 @@ function createProduct (productImg: Image, name: string, weight: number, cost: n
 function createAllProducts () {
     for (let i = 0; i <= groceryImages.length - 1; i++) {
         image2 = groceryImages[i]
-        cost = groceryCosts[i]
-        weight = groceryWeights[i]
+        cost2 = groceryCosts[i]
+        weight2 = groceryWeights[i]
         name = groceryNames[i]
-        createProduct(image2, name, weight, cost)
+        createProduct(image2, name, weight2, cost2)
     }
 }
 let name = ""
-let weight = 0
-let cost = 0
+let weight2 = 0
+let cost2 = 0
 let image2: Image = null
 let p: Sprite = null
+let weight = 0
+let subtotal = 0
+let cost = 0
 let item: Sprite = null
 let textSprite: TextSprite = null
 let player2: Sprite = null
@@ -54,6 +79,8 @@ let groceryCosts: number[] = []
 let groceryWeights: number[] = []
 let groceryNames: string[] = []
 let groceryImages: Image[] = []
+let speed = 0
+speed = 100
 groceryImages = [
 img`
     . . . 2 2 2 . . . . . . . . . . 
@@ -271,8 +298,9 @@ player2 = sprites.create(img`
     .dd.dd.....ddddddd...........
     ............c....c...........
     `, SpriteKind.Player)
-controller.moveSprite(player2)
+controller.moveSprite(player2, speed, speed)
 scene.cameraFollowSprite(player2)
 tiles.placeOnTile(player2, tiles.getTileLocation(1, 4))
 createAllProducts()
 createTextSprite()
+info.startCountdown(30)
